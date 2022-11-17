@@ -233,20 +233,30 @@ int8_t readb(int8_t command)
 
 }
 
+int16_t I;
+float capacity = 0;
+  
 void PrintBatteryStatus()
 {
   dataString = "$GUAGE, ";
 
   uint16_t U = readBat(0x8);
-  int16_t I = readBat(0xa);
-  uint16_t A = readBat(0x4);
+  I = readBat(0xa);
+  capacity += float(I) / 3600;
+  int16_t AA = readBat(0x1C);
+  int32_t AAA = AA + readBat(0x1d) << 16;
+  int16_t A = readBat(0x4);
   float t = readBat(0xc) * 0.1 - 273.15;
   
   dataString += String(U);   // mV - U
   dataString += " mV, ";
   dataString += String(I);  // mA - I
   dataString += " mA, ";
-  dataString += String(A);   // mAh - remaining capacity
+  dataString += String(AA);   // mAh - remaining capacity
+  dataString += " , ";
+  dataString += String(AAA);   // mAh - remaining capacity
+  dataString += " , ";
+  dataString += String(capacity);   // mAh - remaining capacity
   dataString += " mAh, ";
   dataString += String(readBat(0x6));   // mAh - full charge
   dataString += " mAh full, ";
@@ -259,28 +269,46 @@ void PrintBatteryStatus()
 
   display.clearDisplay();
   display.setTextSize(2);      // Normal 1:1 pixel scale
-  display.setCursor(0, 0);     // Start at top-left corner
-  display.print(String(U) + " mV");
-  display.setCursor(0, 18);     // Start at top-left corner
-  display.print(String(I) + " mA");
-  display.setCursor(0, 36);     // Start at top-left corner
-  display.print(String(A) + " mAh");
-  display.setCursor(0, 57);     // Start at top-left corner
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.print(String(t));
-  display.setCursor(34, 53);     // Start at top-left corner
-  display.print("o");
-  display.setCursor(40, 57);     // Start at top-left corner
-  display.print("C");
-  display.setCursor(80, 57);     // Start at top-left corner
-  display.print(String(count));
+  if (I == -257)
+  {
+    display.setCursor(10, 20);     // Start at top-left corner
+    display.print("Insert");
+    display.setCursor(10, 48);     // Start at top-left corner
+    display.print("Cell");
+    capacity = 0;
+  }
+  else
+  {
+    display.setCursor(0, 0);     // Start at top-left corner
+    display.print(String(U) + " mV");
+    display.setCursor(0, 18);     // Start at top-left corner
+    if( I == 0)
+    {
+      display.print("* Finish *");            
+    }
+    else
+    {
+      display.print(String(I) + " mA");      
+    }
+    display.setCursor(0, 36);     // Start at top-left corner
+    display.print(String(round(capacity)) + " mAh");
+    display.setTextSize(1);      // Normal 1:1 pixel scale
+    display.setCursor(16, 57);     // Start at top-left corner
+    display.print(String(t));
+    display.setCursor(0, 53);     // Start at top-left corner
+    display.print("o");
+    display.setCursor(6, 57);     // Start at top-left corner
+    display.print("C");
+    display.setCursor(70, 57);     // Start at top-left corner
+    display.print(String(count) + " s");
+  }
   display.display();    
 }
 
 
 void setup()
 {
-  Wire.setClock(100000);
+  Wire.setClock(1000);
 
   // Open serial communications
   Serial.begin(9600);
@@ -306,9 +334,10 @@ void setup()
 
 void loop()
 {
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+  //if(!display.begin(SSD1306_EXTERNALVCC,SSD1306_SWITCHCAPVCC, 0x3C)) { 
+  if(!display.begin(SSD1306_EXTERNALVCC, 0x3C)) { 
     Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
+    //for(;;); // Don't proceed, loop forever
   }
 
   // display.display() is NOT necessary after every single drawing command,
@@ -325,15 +354,17 @@ void loop()
   // Not all the characters will fit on the display. This is normal.
   // Library will draw what it can and the rest will be clipped.
 
-  display.setCursor(0, 0);     // Start at top-left corner
-  display.print("GEODOS UA");
-  display.setCursor(0, 20);     // Start at top-left corner
+  display.setCursor(40, 0);     // Start at top-left corner
+  display.print("LiIon");
+  display.setCursor(30, 18);     // Start at top-left corner
+  display.print("CHARGER");
+  display.setCursor(50, 36);     // Start at top-left corner
   display.print("MLAB");
   display.display();  
+  delay(2000);
 
   PrintBatteryStatus();
   Serial.println();
-
   /* old version BQ34Z100
   dataString = "$FLASH,";
   dataString += String(ReadFlashByte(48, 68),HEX);
@@ -397,11 +428,13 @@ void loop()
   }
 */  
   display.display();  
+
+  // ResetGuage();
  
   while(true)
   {
     PrintBatteryStatus();  
-    count++;  
+    if(I>0) count++;  
     delay(1000);
   }
 }
