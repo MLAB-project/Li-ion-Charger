@@ -243,8 +243,6 @@ void PrintBatteryStatus()
   uint16_t U = readBat(0x8);
   I = readBat(0xa);
   capacity += float(I) / 3600;
-  int16_t AA = readBat(0x1C);
-  int32_t AAA = AA + readBat(0x1d) << 16;
   int16_t A = readBat(0x4);
   float t = readBat(0xc) * 0.1 - 273.15;
   
@@ -252,11 +250,7 @@ void PrintBatteryStatus()
   dataString += " mV, ";
   dataString += String(I);  // mA - I
   dataString += " mA, ";
-  dataString += String(AA);   // mAh - remaining capacity
-  dataString += " , ";
-  dataString += String(AAA);   // mAh - remaining capacity
-  dataString += " , ";
-  dataString += String(capacity);   // mAh - remaining capacity
+  dataString += String(capacity);   // mAh - transferred charge
   dataString += " mAh, ";
   dataString += String(readBat(0x6));   // mAh - full charge
   dataString += " mAh full, ";
