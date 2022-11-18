@@ -246,14 +246,14 @@ void PrintBatteryStatus()
   int16_t A = readBat(0x4);
   float t = readBat(0xc) * 0.1 - 273.15;
   
+  dataString += String(count);   // charging time
+  dataString += " s, ";
   dataString += String(U);   // mV - U
   dataString += " mV, ";
   dataString += String(I);  // mA - I
   dataString += " mA, ";
   dataString += String(capacity);   // mAh - transferred charge
   dataString += " mAh, ";
-  dataString += String(readBat(0x6));   // mAh - full charge
-  dataString += " mAh full, ";
   dataString += String(t);   // temperature
   dataString += " C";
 
@@ -388,26 +388,26 @@ void loop()
   Serial.println(dataString);   // print to terminal (additional 700 ms in DEBUG mode)
   digitalWrite(LED_red, LOW);
 
-  Serial.print("LED CONF: ");
+  Serial.print("#LED CONF: ");
   Serial.println(ReadFlashByte(64,4), HEX);
-  Serial.print("Design Capacity: ");
+  Serial.print("#Design Capacity: ");
   Serial.println(ReadFlashByte(48,11)*256 + ReadFlashByte(48,12));
-  Serial.print("Design Energy: ");
+  Serial.print("#Design Energy: ");
   Serial.println(ReadFlashByte(48,13)*256 + ReadFlashByte(48,14));
-  Serial.print("Bat. low alert: ");
-  Serial.print("Cell BL Set Volt Threshold: ");
+  Serial.print("#Bat. low alert: ");
+  Serial.print("#Cell BL Set Volt Threshold: ");
   Serial.println(ReadFlashByte(49,8)*256 + ReadFlashByte(49,9));
-  Serial.print("Cell BL Clear Volt Threshold: ");
+  Serial.print("#Cell BL Clear Volt Threshold: ");
   Serial.println(ReadFlashByte(49,11)*256 + ReadFlashByte(49,12));
-  Serial.print("Cell BL Set Volt Time: ");
+  Serial.print("#Cell BL Set Volt Time: ");
   Serial.println(ReadFlashByte(49,10));
-  Serial.print("Cell BH Set Volt Threshold: ");
+  Serial.print("#Cell BH Set Volt Threshold: ");
   Serial.println(ReadFlashByte(49,13)*256 + ReadFlashByte(49,14));
-  Serial.print("Cell BH Volt Time: ");
+  Serial.print("#Cell BH Volt Time: ");
   Serial.println(ReadFlashByte(49,15));
-  Serial.print("Cell BH Clear Volt Threshold: ");
+  Serial.print("#Cell BH Clear Volt Threshold: ");
   Serial.println(ReadFlashByte(49,16)*256 + ReadFlashByte(49,17));
-  Serial.print("Cycle Delta: ");
+  Serial.print("#Cycle Delta: ");
   Serial.println(ReadFlashByte(49,21));
 
 /*
@@ -429,6 +429,7 @@ void loop()
   {
     PrintBatteryStatus();  
     if(I>0) count++;  
+    if(I<0) count = 0;
     delay(1000);
   }
 }
