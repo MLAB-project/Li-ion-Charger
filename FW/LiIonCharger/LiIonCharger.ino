@@ -63,15 +63,6 @@ TX1/INT1 (D 11) PD3 17|        |24 PC2 (D 18) TCK
 
 #define LED_red   23   // PC7
 #define RESET     0    // PB0
-#define GPSpower  26   // PA2
-#define SDpower1  1    // PB1
-#define SDpower2  2    // PB2
-#define SDpower3  3    // PB3
-#define SS        4    // PB4
-#define MOSI      5    // PB5
-#define MISO      6    // PB6
-#define SCK       7    // PB7
-#define INT       20   // PC4
 
 #define BQ34Z100 0x55
 
@@ -80,7 +71,7 @@ TX1/INT1 (D 11) PD3 17|        |24 PC2 (D 18) TCK
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define OLED_RESET     RESET // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 uint16_t count = 0;
@@ -247,15 +238,14 @@ void PrintBatteryStatus()
   float t = readBat(0xc) * 0.1 - 273.15;
   
   dataString += String(count);   // charging time
-  dataString += " s, ";
+  dataString += ",";
   dataString += String(U);   // mV - U
-  dataString += " mV, ";
+  dataString += ",";
   dataString += String(I);  // mA - I
-  dataString += " mA, ";
+  dataString += ",";
   dataString += String(capacity);   // mAh - transferred charge
-  dataString += " mAh, ";
+  dataString += ",";
   dataString += String(t);   // temperature
-  dataString += " C";
 
   digitalWrite(LED_red, HIGH);  // Blink for Dasa
   Serial.println(dataString);   // print to terminal (additional 700 ms in DEBUG mode)
@@ -324,11 +314,7 @@ void setup()
 
   Serial.println("#Hmmm...");
 
-}
-
-void loop()
-{
-  //if(!display.begin(SSD1306_EXTERNALVCC,SSD1306_SWITCHCAPVCC, 0x3C)) { 
+  //if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
   if(!display.begin(SSD1306_EXTERNALVCC, 0x3C)) { 
     Serial.println(F("SSD1306 allocation failed"));
     //for(;;); // Don't proceed, loop forever
@@ -357,8 +343,6 @@ void loop()
   display.display();  
   delay(2000);
 
-  PrintBatteryStatus();
-  Serial.println();
   /* old version BQ34Z100
   dataString = "$FLASH,";
   dataString += String(ReadFlashByte(48, 68),HEX);
@@ -410,26 +394,13 @@ void loop()
   Serial.print("#Cycle Delta: ");
   Serial.println(ReadFlashByte(49,21));
 
-/*
-  for(uint8_t i=0; i<128; i+=10) 
-  {
-    display.drawPixel(i, 63, WHITE);
-  }
-  
-  for(uint8_t i=0; i<128; i+=1) 
-  {
-    display.drawLine(i,60, i, 61, WHITE);
-  }
-*/  
-  display.display();  
+  Serial.println("#GUAGE,n,s,mV,mA,mAh,C");
+}
 
-  // ResetGuage();
- 
-  while(true)
-  {
-    PrintBatteryStatus();  
-    if(I>0) count++;  
-    if(I<0) count = 0;
-    delay(1000);
-  }
+void loop()
+{
+  PrintBatteryStatus();  
+  if(I>0) count++;  
+  if(I<0) count = 0;
+  delay(1000);
 }
