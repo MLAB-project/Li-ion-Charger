@@ -394,7 +394,8 @@ void setup()
   Serial.print("#Cycle Delta: ");
   Serial.println(ReadFlashByte(49,21));
 
-  Serial.println("#GUAGE,n,s,mV,mA,mAh,C");
+  Serial.println("#GUAGE,Charging Time,Voltage,Current,Charge,Temperature");
+  Serial.println("#GUAGE,s,mV,mA,mAh,C");
 }
 
 void loop()
