@@ -72,8 +72,9 @@ TX1/INT1 (D 11) PD3 17|        |24 PC2 (D 18) TCK
 #define SCK         7    // PB7
 #define INT         20   // PC4
 
-#define BQ34Z100 0x55
+#define MAXFILES 100
 
+#define BQ34Z100 0x55
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -87,6 +88,9 @@ String dataString;
 
 uint32_t tm, tm_old;
 File dataFile;
+uint8_t fn;
+String filename;
+boolean new_charging = false;
 
 uint8_t bcdToDec(uint8_t b)
 {
@@ -282,30 +286,22 @@ void PrintBatteryStatus()
   dataString += ",";
   dataString += String(t);   // temperature
 
-  DDRB = 0b10111110;
-  PORTB = 0b00001111;  // SDcard Power ON
-  delay(200);
+  boolean SDok = false;
   // make sure that the default chip select pin is set to output
   // see if the card is present and can be initialized:
-  if (!SD.begin(SS)) 
+  //if (SD.begin(SS)) 
   {
-    //Serial.println("#Card failed, or not present");
-    // don't do anything more:
-    //resetFunc();
-  }
-
-  boolean SDok = false;
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  dataFile = SD.open("BATLOG.TXT", FILE_WRITE);
-  // if the file is available, write to it:
-  if (dataFile) 
-  {
-    dataFile.println(dataString);  // write to SDcard (800 ms) 
-    SDok = true;
-    dataFile.close();
+    // open the file. note that only one file can be open at a time,
+    // so you have to close this one before opening another.
+    dataFile = SD.open(filename, FILE_WRITE);
+    // if the file is available, write to it:
+    if (dataFile) 
+    {
+      dataFile.println(dataString);  // write to SDcard (800 ms) 
+      SDok = true;
+      dataFile.close();
+    }  
   }  
-
   digitalWrite(LED_red, HIGH);  // Blink for Dasa
   Serial.println(dataString);   // print to terminal (additional 700 ms in DEBUG mode)
   digitalWrite(LED_red, LOW);
@@ -319,6 +315,7 @@ void PrintBatteryStatus()
     display.setCursor(10, 48);     // Start at top-left corner
     display.print("Cell");
     capacity = 0;
+    new_charging = true;
   }
   else
   {
@@ -327,11 +324,20 @@ void PrintBatteryStatus()
     display.setCursor(0, 18);     // Start at top-left corner
     if( I == 0)
     {
-      display.print("* Finish *");            
+      display.print("* Finish");            
     }
     else
     {
-      display.print(String(I) + " mA");      
+      display.print(String(I) + " mA");     
+      if( I > 0)
+      {
+        if(new_charging)
+        {
+          if(fn<MAXFILES) fn++;
+          filename = String(fn) + ".txt";
+          new_charging = false;   
+        }
+      }
     }
     display.setCursor(0, 36);     // Start at top-left corner
     display.print(String(round(capacity)) + " mAh");
@@ -346,8 +352,10 @@ void PrintBatteryStatus()
     display.print(String(count) + " s");
     if (SDok) 
     {
-      display.setCursor(110, 0);     // Start at top-left corner
+      display.setCursor(100, 0);     // Start at top-left corner
       display.print("SD");      
+      display.setCursor(100, 10);     // Start at top-left corner
+      display.print(String(fn));      
     }
   }
   display.display();    
@@ -356,7 +364,7 @@ void PrintBatteryStatus()
 
 void setup()
 {
-  //Wire.setClock(1000);
+  Wire.setClock(10000);
 
   // Initiation of RTC
   Wire.beginTransmission(0x51); // init clock
@@ -417,7 +425,7 @@ void setup()
   // display.display() is NOT necessary after every single drawing command,
   // unless that's what you want...rather, you can batch up a bunch of
   // drawing operations and then update the screen all at once by calling
-  // display.display(). These examples demonstrate both approaches...
+  // display.display(). 
   display.clearDisplay();
 
   display.setTextSize(2);      // Normal 1:1 pixel scale
@@ -489,6 +497,26 @@ void setup()
 
   Serial.println("#GUAGE,Charging Counter,Time,Voltage,Current,Charge,Temperature");
   Serial.println("#GUAGE,n,s,mV,mA,mAh,C");
+
+  {
+    DDRB = 0b10111110;
+    PORTB = 0b00001111;  // SDcard Power ON
+  
+    // make sure that the default chip select pin is set to output
+    // see if the card is present and can be initialized:
+    if (!SD.begin(SS)) 
+    {
+      //Serial.println("#Card failed, or not present");
+      // don't do anything more:
+    }
+    
+    for (fn = 0; fn<MAXFILES; fn++) // find last file
+    {
+       filename = String(fn) + ".txt";
+       if (SD.exists(filename) == 0) break;
+    }
+    filename = String(fn) + ".txt";
+  }    
     
   readRTC();
   tm_old = tm;
