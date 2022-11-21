@@ -90,6 +90,7 @@ uint32_t tm, tm_old;
 File dataFile;
 uint8_t fn;
 String filename;
+String sn = "";
 boolean new_charging = false;
 
 uint8_t bcdToDec(uint8_t b)
@@ -336,6 +337,17 @@ void PrintBatteryStatus()
           if(fn<MAXFILES) fn++;
           filename = String(fn) + ".txt";
           new_charging = false;   
+          dataString = "#CHARGER,";
+          dataString += sn; 
+          // open the file. note that only one file can be open at a time,
+          // so you have to close this one before opening another.
+          dataFile = SD.open(filename, FILE_WRITE);
+          // if the file is available, write to it:
+          if (dataFile) 
+          {
+            dataFile.println(dataString);  // write to SDcard (800 ms) 
+            dataFile.close();
+          }         
         }
       }
     }
@@ -350,11 +362,17 @@ void PrintBatteryStatus()
     display.print("C");
     display.setCursor(70, 57);     // Start at top-left corner
     display.print(String(count) + " s");
+    display.setCursor(103, 18);     // Start at top-left corner
+    display.print("s.n.");
+    display.setCursor(103, 28);     // Start at top-left corner
+    display.print(sn.substring(sn.length()-2));
+
+    
     if (SDok) 
     {
-      display.setCursor(100, 0);     // Start at top-left corner
+      display.setCursor(103, 0);     // Start at top-left corner
       display.print("SD");      
-      display.setCursor(100, 10);     // Start at top-left corner
+      display.setCursor(103, 10);     // Start at top-left corner
       display.print(String(fn));      
     }
   }
@@ -416,6 +434,18 @@ void setup()
 
   Serial.println("#Hmmm...");
 
+  Wire.beginTransmission(0x58);                   // request SN from EEPROM
+  Wire.write((int)0x08); // MSB
+  Wire.write((int)0x00); // LSB
+  Wire.endTransmission();
+  Wire.requestFrom((uint8_t)0x58, (uint8_t)16);    
+  for (int8_t reg=0; reg<16; reg++)
+  { 
+    uint8_t serialbyte = Wire.read(); // receive a byte
+    if (serialbyte<0x10) sn += "0";
+    sn += String(serialbyte,HEX);    
+  }
+
   //if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
   if(!display.begin(SSD1306_EXTERNALVCC, 0x3C)) { 
     Serial.println(F("SSD1306 allocation failed"));
@@ -442,6 +472,9 @@ void setup()
   display.print("CHARGER");
   display.setCursor(50, 36);     // Start at top-left corner
   display.print("MLAB");
+  display.setCursor(0, 55);     // Start at top-left corner
+  display.setTextSize(1);      // Normal 1:1 pixel scale
+  display.print(sn.substring(11));
   display.display();  
   delay(2000);
 
@@ -463,7 +496,7 @@ void setup()
   Serial.println(dataString);
   */
 
-  dataString = "$FLASH,";
+  dataString = "#FLASH,";
   for (uint8_t n=32; n<43; n++) dataString += char(ReadFlashByte(48, n));   // Part type
   dataString += ",";
   for (uint8_t n=44; n<55; n++) dataString += char(ReadFlashByte(48, n));   // Manufacturer
@@ -495,6 +528,8 @@ void setup()
   Serial.print("#Cycle Delta: ");
   Serial.println(ReadFlashByte(49,21));
 
+  Serial.print("#CHARGER,");
+  Serial.println(sn);
   Serial.println("#GUAGE,Charging Counter,Time,Voltage,Current,Charge,Temperature");
   Serial.println("#GUAGE,n,s,mV,mA,mAh,C");
 
@@ -517,7 +552,19 @@ void setup()
     }
     filename = String(fn) + ".txt";
   }    
-    
+
+  dataString = "#CHARGER,";
+  dataString += sn; 
+  // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  dataFile = SD.open(filename, FILE_WRITE);
+  // if the file is available, write to it:
+  if (dataFile) 
+  {
+    dataFile.println(dataString);  // write to SDcard (800 ms) 
+    dataFile.close();
+  }  
+
   readRTC();
   tm_old = tm;
 }
