@@ -12,3 +12,4 @@ Based on modules:
 * [DATALOGGER01A](https://github.com/mlab-modules/DATALOGGER01)
 * [LION1CELL01B](https://github.com/mlab-modules/LION1CELL01)
 * [TPS63060V01A](https://github.com/mlab-modules/TPS63060V01)
+* [USBRS23202A](https://github.com/mlab-modules/USB232R02)
