@@ -5,7 +5,7 @@ Features:
   * Small charging current (~450mA) enable great charging efficiency and precision
   * Small constant voltage charging termination current (bellow 50mA)
 
-![Li-Ion charger prototype](/doc/img/Li-ion-Charger.jpg.jpg)
+![Li-Ion charger prototype](/doc/img/Li-ion-Charger.jpg)
 
 Based on modules:
 * [OLED01A](https://github.com/mlab-modules/OLED01)
