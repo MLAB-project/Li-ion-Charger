@@ -2,8 +2,9 @@
 Advanced [Li-Ion cell](https://en.wikipedia.org/wiki/Lithium-ion_battery) charger for SPACEDOS and AIRDOS dosimeters. Optimised to charge [INR18650MJ1](https://eu.nkon.nl/sk/k/Specification%20INR18650MJ1%2022.08.2014.pdf) cells to maximum capacity.
 
 Features:
-  * Small charging current (~450mA) enable great charging efficiency and precision
+  * Small charging current (~450mA) enable great charging efficiency and precise cut-off voltage
   * Small constant voltage charging termination current (bellow 50mA)
+  * Logging every charging cycle to SDcard to allow data post-process and high-quality cells selection
 
 ![Li-Ion charger prototype](/doc/img/Li-ion-Charger.jpg)
 
